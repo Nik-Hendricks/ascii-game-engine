@@ -1,0 +1,195 @@
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="/js/font.js"></script>
+		<script src="/js/game.js"></script>
+	</head>
+	<canvas id="canvas">
+	</canvas>
+	<canvas id="temp-canvas">
+	</canvas>
+</html>
+<style>
+#canvas{
+	position:absolute;
+	width:100%;
+	height:100%;
+	top:0;
+	bottom:0;
+	right:0;
+	left:0;
+	background:black;
+}
+</style>
+<script>
+
+    var player, gameMap, secondsPassed, oldTimeStamp, mapLayer, camera
+    var gameGrid, inventoryGrid, testGrid
+    var inventoryWindow, gameWindow, newWindow
+    var game = new Game();
+    var gen = new Generator();
+
+
+    window.onload = () => {
+        initScene().then(() => {
+            window.requestAnimationFrame(loop);
+        });
+    }
+
+
+    window.onkeydown = (ev) => {
+		//console.log(gameWindow.applyCamera(player, 10))
+        player.prevPosition = player.mapPosition
+        console.log(player.prevPosition)
+		if(ev.key == 'w'){
+			
+			player.mapPosition[0] = player.mapPosition[0] 
+			player.mapPosition[1] = player.mapPosition[1] - 1
+
+            game.entities.forEach(ent => {
+                if(player.cameraScrollY != false){
+                    ent.position[1] = ent.position[1] + 1
+                }
+            })
+		}
+		if(ev.key == 's'){
+			player.mapPosition[0] = player.mapPosition[0]
+			player.mapPosition[1] = player.mapPosition[1] + 1
+
+            game.entities.forEach(ent => {
+                if(player.cameraScrollY != false){
+                    ent.position[1] = ent.position[1] - 1
+                }
+            })
+		}
+		if(ev.key == 'd'){
+			player.mapPosition[0] = player.mapPosition[0] + 1
+			player.mapPosition[1] = player.mapPosition[1]
+
+            game.entities.forEach(ent => {
+                if(player.cameraScrollX != false){
+                    ent.position[0] = ent.position[0] - 1
+                }
+            })
+
+		}
+		if(ev.key == 'a'){
+			player.mapPosition[0] = player.mapPosition[0] -1
+			player.mapPosition[1] = player.mapPosition[1]
+
+
+            game.entities.forEach(ent => {
+                if(player.cameraScrollX != false){
+                    ent.position[0] = ent.position[0] + 1
+                }
+            })
+
+		}
+		if(ev.key == " "){
+			checkSelect();
+		}
+	}
+
+
+    function loop(timeStamp){
+		game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height)
+        screenLayer.update()
+        mapLayer.update();
+		game.updateGroup(game.entities);
+        game.updateGroup(game.layerGroup);
+        screenLayer.entities.camera.update();
+        
+		//gen.appendSprite(1, 1, gameWindow.grid, gameMap.applyCamera(player, 54, 28))
+
+        // Calculate the number of seconds passed since the last frame
+        secondsPassed = (timeStamp - oldTimeStamp) / 1000;
+        oldTimeStamp = timeStamp;
+        
+        // Calculate fps
+        fps = Math.round(1 / secondsPassed);
+
+        //  console.log(player.mapPosition)
+		gen.appendSprite(1, 2, newWindow.grid, [['F','P','S',':',' ', fps.toString().split('')[0], (fps.toString().split('')[1] != undefined ? fps.toString().split('')[1] : ' '),' ', '(', player.mapPosition[0].toString().split('')[0], (player.mapPosition[0].toString().split('')[1] != undefined ? player.mapPosition[0].toString().split('')[1] : ' ' ),',',player.mapPosition[1].toString().split('')[0], (player.mapPosition[1].toString().split('')[1] != undefined ? player.mapPosition[1].toString().split('')[1] : ' ' ),')']]);
+        window.requestAnimationFrame(loop);
+    }
+
+    function createEnemys(x){
+        var enemy;
+        for(var i = 0; i < x; i ++){
+                enemy = new Entity(5, 5, 16, 32, [
+                                    [' ','▲',' '],
+                                    ['┌','☺',' '],
+                                ])
+                enemy.position = [randRange(0, 50), randRange(0, 50)]
+                game.entities.push(enemy)
+                initBehavior(enemy);
+        }
+    }
+
+
+    function initBehavior(enemy){
+        setInterval(() => {ai(enemy)}, 200)
+    }
+
+    function ai(entity){
+        var dir = randRange(0, 2)
+        var op = randRange(0, 2)
+
+        if(op == 1){
+            entity.position[dir] = entity.position[dir] + 1
+        }else{
+            entity.position[dir] = entity.position[dir] - 1
+        }
+
+    }
+
+    function initScene(){
+        return new Promise(resolve => {
+            player = new Entity(27, 15 ,16, 32, ['☻']);
+        player.mapPosition = [34, 30]
+
+        testGrid = new Grid(20, 5);
+
+		newWindow = new Entity(57, 0, 16, 32, gen.makeTitle(' ASCIInc v0.0.2 ', gen.makeBorder(testGrid)))
+		newWindow.setAction(0, 0, () => {console.log('oof')}, game)
+
+		var gameGrid = new Grid(56, 30);
+		gameWindow = new Entity(0, 0, 16, 32, gen.makeTitle(' Game ', gen.makeBorder(gameGrid)))
+
+		gameMap = new Entity(0, 0, 16, 32, map1());
+		
+		inventoryGrid = new Grid(20, 25);
+        inventoryWindow = new Entity(57, 5, 16, 32, gen.makeTitle(' Inventory ', gen.makeBorder(inventoryGrid)))
+        
+        mapLayer = new Layer(100, 100)
+        screenLayer = new Layer(77, 30)
+
+        mapLayer.add(gameMap)
+        mapLayer.add(player)
+
+        camera = new PlayerCamera(player, [mapLayer],  58, 28)
+        cameraGrid = new Entity(50, 28, camera.update())
+
+
+        screenLayer.add(cameraGrid)
+        screenLayer.add(gameWindow)
+        screenLayer.add(newWindow)
+
+
+
+
+        game.layerGroup.push(mapLayer)
+        game.layerGroup.push(screenLayer)
+
+        createEnemys(10);
+        resolve();
+        })
+    }
+
+
+function randRange(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+  }
+</script>

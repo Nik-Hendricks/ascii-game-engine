@@ -1,0 +1,198 @@
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="/js/font.js"></script>
+		<script src="/js/game.js"></script>
+	</head>
+	<canvas id="canvas">
+	</canvas>
+	<canvas id="temp-canvas">
+	</canvas>
+</html>
+<style>
+#canvas{
+	position:absolute;
+	width:100%;
+	height:100%;
+	top:0;
+	bottom:0;
+	right:0;
+	left:0;
+	background:black;
+}
+</style>
+<script>
+
+    var screenLayer, mapLayer, box, player,secondsPassed, oldTimeStamp, camera, gameMapEntity, debugWindowEntity, cursor, friend, secondCamEntity, secondCam, inventoryEntity, controls;
+    var util = new Util();
+    var game = new Game();
+
+
+
+
+    window.onload = () => {
+        initScene();
+        window.requestAnimationFrame(loop);
+        controls = new PayerControls(player)
+    }
+
+
+
+
+
+
+    function loop(timeStamp){
+		game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height)
+
+        gameMapEntity.grid = camera.update();
+        friend.position[0] = player.prevPosition[0] - 1;
+        friend.position[1] = player.prevPosition[1] - 1;
+        //console.log(friend.position)
+        // Calculate the number of seconds passed since the last frame
+        secondsPassed = (timeStamp - oldTimeStamp) / 1000;
+        oldTimeStamp = timeStamp;
+        
+        // Calculate fps
+        fps = Math.round(1 / secondsPassed);
+
+        cursor.position[0] = game.mousePos[1]
+        cursor.position[1] = game.mousePos[0]
+
+        //console.log(fps)
+
+        //draw
+        
+		util.appendSprite(1, 3, debugWindowEntity.grid, [['F','P','S',':', fps.toString().split('')[0], (fps.toString().split('')[1] != undefined ? fps.toString().split('')[1] : ' '),' ', '(', player.mapPosition[0].toString().split('')[0], (player.mapPosition[0].toString().split('')[1] != undefined ? player.mapPosition[0].toString().split('')[1] : ' ' ),',',player.mapPosition[1].toString().split('')[0], (player.mapPosition[1].toString().split('')[1] != undefined ? player.mapPosition[1].toString().split('')[1] : ' ' ),')']]);
+
+        secondCamEntity.grid = secondCam.update();
+
+        screenLayer.update();
+        mapLayer.update();
+        game.updateLayer(screenLayer)
+
+        window.requestAnimationFrame(loop);
+    }
+
+
+    function createEnemys(x){
+        var enemy;
+
+
+        var enemys = [
+                    [
+                        ['▲'],
+                        ['☺'],
+                    ],
+                    [
+                        ['☺']
+                    ],
+                    [
+                        ['♪'],
+                        ['☺'],                       
+                    ]
+                ]
+
+        for(var i = 0; i < x; i ++){
+                enemy = new Entity(5, 5, enemys[randRange(0, 3)])
+                enemy.position = [randRange(0, 50), randRange(0, 50)]
+                mapLayer.registerEntity('enemy' + i, enemy)
+                initBehavior(enemy);
+        }
+    }
+
+    function initBehavior(enemy){
+        setInterval(() => {ai(enemy)}, 100)
+    }
+
+    function ai(entity){
+        var dir = randRange(0, 2)
+        var op = randRange(0, 2)
+
+        if(op == 1 || entity.position[dir] <= 0){
+            entity.position[dir] = entity.position[dir] + 1
+        }else{
+            entity.position[dir] = entity.position[dir] - 1
+        }
+
+    }
+
+    function initScene(){
+
+        var inventory = {
+
+        }
+
+        box = new Entity(10, 10, [['◘','◘','◘'],['◘','◘','◘'],['◘','◘','◘'],])
+
+        console.log(game.mousePos)
+
+        cursor = new Entity(1,1, [['♦']])
+
+        player = new Entity(5, 5, ['☻'])
+        friend = new Entity(5, 4, ['☺'])
+
+
+        screenLayer = new Layer(100, 100);
+        mapLayer = new Layer(200,200);
+
+
+        gameMapEntity = new Entity(1,1, new Grid(56, 30))
+        debugWindowEntity = new Entity(0, 59, util.makeTitle('INFECTOR 0.2.0' ,util.makeBorder(new Grid(20, 5))))
+        inventoryEntity = new Entity(5, 62, new Grid(20, 20));
+
+        secondCamEntity = new Entity(5, 69, new Grid(5, 20));
+
+        inventoryEntity.grid = util.appendSprite(1, 1, inventoryEntity.grid, [['i','n','v','e','n','t','o','r','y']])
+
+        var inventoryLineCountBuffer = 2;
+        for (const [key, value] of Object.entries(inventory)) {
+          console.log(`${key}: ${value}`);
+          console.log(inventory[key])
+
+        var invStr = `•${key} X${inventory[key].quantity}`
+        console.log(invStr)
+            inventoryLineCountBuffer++
+          inventoryEntity.grid = util.appendSprite(inventoryLineCountBuffer,2 , inventoryEntity.grid , [invStr.split('')])
+        }
+
+        //mapLayer.registerEntity('background', new Entity(0, 0, util.CellularAutomata(util.randomize(new Grid(200, 200), ['•', ' ']), 1)))
+        //setInterval(() => {
+        //    mapLayer.entities.background.grid = util.CellularAutomata(mapLayer.entities.background.grid, 1)
+        //}, 100)
+
+        mapLayer.registerEntity('background', new Entity(0, 0, util.fill(mapLayer.grid, '•')))
+        mapLayer.registerEntity('box', box);
+        mapLayer.registerEntity('friend', friend)
+        mapLayer.registerEntity('player', player)
+      //  screenLayer.registerEntity('secondCam', secondCamEntity)
+ 
+
+
+        camera = new PlayerCamera(player, mapLayer, 58, 28)
+        secondCam = new PlayerCamera( player ,mapLayer, 20, 5)
+
+        
+        screenLayer.registerEntity('map', gameMapEntity)
+        screenLayer.registerEntity('debugWindow', debugWindowEntity)
+        screenLayer.registerEntity('inventory', inventoryEntity)
+        screenLayer.registerEntity('cursor', cursor)
+        createEnemys(10);
+        //createWeed(420);
+
+        
+
+    }
+
+
+function randRange(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+  }
+</script>
+
+<style>
+    canvas{
+        cursor: none;
+    }
+</style>

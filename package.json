@@ -1,0 +1,23 @@
+{
+  "name": "infector",
+  "version": "1.0.0",
+  "description": "ASCII art game",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nik-Hendricks/infector-game.git"
+  },
+  "author": "Nicholas Cooley",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nik-Hendricks/infector-game/issues"
+  },
+  "homepage": "https://github.com/Nik-Hendricks/infector-game#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
