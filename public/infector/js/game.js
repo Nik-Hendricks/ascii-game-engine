@@ -1,3 +1,9 @@
+class GridParser{
+    constructor(tilemap, colormap, actionmap, lightMap, collisionMap){
+
+    }
+}
+
 class Util{
     constructor(){
 
@@ -282,8 +288,53 @@ class PlayerCamera{
 
         return this.layer.snapshot(startX, startY, rendersizeX, rendersizeY)   
     }
+
+    getMouseCoords(mousePos){
+        var following = this.following;
+        var rendersizeX = this.rendersizeX;
+        var rendersizeY = this.rendersizeY;
+        var startY = (following.mapPosition[0] - rendersizeY / 2 > 0) ? following.mapPosition[0] - rendersizeY / 2: 0;
+        var startX = (following.mapPosition[1] - rendersizeX / 2 > 0) ? following.mapPosition[1] - rendersizeX / 2: 0;
+
+        return [startX + mousePos[0] - 1, startY + mousePos[1] - 1]
+
+    }
 }
 
+
+class Line{
+    constructor(startPos, endPos){
+
+            var x1 = startPos[0]
+            var x2 = startPos[1]
+
+            var y1 = endPos[0]
+            var y2 = endPos[1]
+
+            var retarr = new Grid(x2 - x1, y2 - y1)
+
+            var m_new = 2 * (y2 - y1);
+            var slope_error_new = m_new - (x2 - x1);
+         
+            for (x = x1, y = y1; x <= x2; x++)
+            {
+                retarr[x][y] = "█"
+     
+                // Add slope to increment angle formed
+                slope_error_new += m_new;
+     
+                // Slope error reached limit, time to
+                // increment y and update slope error.
+                if (slope_error_new >= 0)
+                {
+                    y++;
+                    slope_error_new -= 2 * (x2 - x1);
+                }
+            }
+            
+        return retarr
+    }
+}
 
 class Vec2d{
     constructor(x, y){
@@ -370,7 +421,7 @@ class Game{
         this.tempCtx = this.tempCanvas.getContext('2d');
         this.fontX = 16;
         this.fontY = 32;
-        this.font = new Font('img/IBM8x16_NoPadding_extended.png', this.fontX, this.fontY)
+        this.font = new Font('img/IBM8x16_NoPadding_extended.png')
         this.layerGroup = [];
         this.entities = [];
         this.actions = [];
@@ -416,7 +467,7 @@ class Game{
                     if(layer.grid[i][j] == ' '){
 
                     }else{
-                        this.font.drawChar(layer.grid[i][j], drawPosX, drawPosY)
+                        this.font.drawChar(layer.grid[i][j], drawPosX, drawPosY, undefined, this)
                     }
                     
                 }

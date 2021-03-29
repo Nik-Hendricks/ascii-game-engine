@@ -1,0 +1,109 @@
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src='/socket.io/socket.io.js'></script>
+        <script src="/js/Vec2d.js"></script>
+		<script src="/js/font.js"></script>
+		<script src="/js/game.js"></script>	</head>
+	<canvas id="canvas">
+	</canvas>
+	<canvas id="temp-canvas">
+	</canvas>
+</html>
+<style>
+#canvas{
+	position:absolute;
+	width:100%;
+	height:100%;
+	top:0;
+	bottom:0;
+	right:0;
+	left:0;
+	background:black;
+}
+</style>
+<script>
+var screenLayer, cursor;
+var util = new Util();
+var game;
+
+
+
+class Infector{
+    constructor(x, y){
+        this.fps = 0;
+        this.resX = x;
+        this.resY = y;
+        this.game = new Game();
+
+
+        //anyways this not probably should be in this file but
+        //im going to make a high level game map and entity storage solution
+        //then the game is going to compile/parse the map at runtime on first load or chuck load
+        //
+        window.onload = () => {
+            this.initScene();
+        }
+
+    }
+    
+
+    initScene(){
+        screenLayer = new Layer(this.resX, this.resY);
+        cursor = new Entity(1,1, ['•'])
+
+
+        screenLayer.registerEntity('cursor', cursor)
+
+        this.initialPrompt();
+        window.requestAnimationFrame(() => {this.loop()});
+    }
+
+    loop(timeStamp){
+        this.game.ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height)
+        // Calculate the number of seconds passed since the last frame
+        var secondsPassed = (timeStamp - oldTimeStamp) / 1000;
+        var oldTimeStamp = timeStamp;
+
+        // Calculate fps
+        this.fps = Math.round(1 / secondsPassed);
+
+        if(this.game.mousePos[0] < this.resX && this.game.mousePos[1] < this.resY){
+            cursor.position[0] = this.game.mousePos[1]
+            cursor.position[1] = this.game.mousePos[0]
+        }
+
+
+
+        screenLayer.update();
+        this.game.updateLayer(screenLayer)
+
+        window.requestAnimationFrame(() => {this.loop()});
+    }
+
+    this.initialPrompt();
+}
+
+
+
+
+
+
+
+while(!demension){
+        var demension = prompt("Demensions x,y: ");
+
+}
+
+var x = demension.split(",")[0]
+var y = demension.split(",")[1]
+
+var infector = new Infector(window.screen.width / 10, window.screen.height / 10);
+
+</script>
+
+<style>
+    canvas{
+        cursor: none;
+    }
+</style>

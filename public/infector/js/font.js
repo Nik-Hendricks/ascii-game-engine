@@ -1,13 +1,13 @@
 
 
 class Font{
-    constructor(src){
+    constructor(src, context){
         this.fontImage = new Image();
         this.fontImage.src = src;
         this.colors = ["#0000", "#FFFF", "#FFE0", "#F81F", "#00F", "#00FF00"]
         this.colorMap = [];
         this.currentColor = 0;
-
+        
         this.fontImage.onload = () => {
             this.init();
 
@@ -35,7 +35,7 @@ class Font{
         })
     }
 
-    drawChar(charCode, posX, posY, color){
+    drawChar(charCode, posX, posY, color, context){
         var charmap = [
             [' ','a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
             'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x','y',
@@ -90,7 +90,8 @@ class Font{
 
 
         if(charCode != ' '){
-            game.ctx.drawImage(this.colorMap[color], scopeX, scopeY, 7 , 15 , posX, posY, 16, 32);
+            context.ctx.drawImage(this.colorMap[color], scopeX, scopeY, 7 , 15 , posX, posY, 16, 32);
+            //context.ctx.drawImage(this.colorMap[getRandomInt(0, 5)], scopeX, scopeY, 7 , 15 , posX, posY, 16, 32);
             //game.ctx.drawImage(this.fontImage, scopeX, scopeY, 7 , 15 , posX, posY, 16, 32);
         }
     }

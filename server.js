@@ -36,6 +36,10 @@ app.get('/2', (req, res) => {
     res.sendFile(__dirname + '/public/infector/game2.html')
 })
 
+app.get('/creator', (req, res) => {
+  res.sendFile(__dirname + '/public/infector/creator.html');
+})
+
 connectedUsers = []
 io.on('connection', (socket) =>  {
   console.log('connection')
