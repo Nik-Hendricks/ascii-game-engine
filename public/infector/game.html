@@ -97,8 +97,10 @@
         // Calculate fps
         fps = Math.round(1 / secondsPassed);
 
-        cursor.position[0] = game.mousePos[1]
-        cursor.position[1] = game.mousePos[0]
+        if(game.mousePos[0] < 200 && game.mousePos[1] < 200){
+            cursor.position[0] = game.mousePos[1]
+            cursor.position[1] = game.mousePos[0]
+        }
 
         //console.log(fps)
 

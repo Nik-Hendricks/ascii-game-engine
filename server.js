@@ -4,8 +4,8 @@ const io = require('socket.io')(http);
 const fs = require('fs');
 var connectedUsers;
 
-http.listen(81, () => {
-  console.log("listening on 81")
+http.listen(80, () => {
+  console.log("listening on 80")
 })
 
 //app.listen(81)
