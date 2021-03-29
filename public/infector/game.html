@@ -1,9 +1,9 @@
 <html>
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src='/socket.io/socket.io.js'></script>
 		<script src="/js/font.js"></script>
-		<script src="/js/game.js"></script>
-	</head>
+		<script src="/js/game.js"></script>	</head>
 	<canvas id="canvas">
 	</canvas>
 	<canvas id="temp-canvas">
@@ -23,31 +23,73 @@
 </style>
 <script>
 
-    var screenLayer, mapLayer, box, player,secondsPassed, oldTimeStamp, camera, gameMapEntity, debugWindowEntity, cursor, friend, secondCamEntity, secondCam, inventoryEntity, controls;
+    var username, screenLayer, mapLayer, box, player,secondsPassed, oldTimeStamp, camera, gameMapEntity, debugWindowEntity, cursor, friend, secondCamEntity, secondCam, inventoryEntity, controls;
     var util = new Util();
     var game = new Game();
+    var socket = io();
+
+    var onlinePlayers = []
 
 
 
+
+    socket.on('newPlayer', (username, pos)  => {
+        console.log(username)
+        onlinePlayers[username] = pos
+        mapLayer.registerEntity(`${username}Tag`, new Entity(pos[0] -1, pos[1] - 1, [username.split('')]))
+        mapLayer.registerEntity(username, new Entity(pos[0], pos[1], ['☺']))
+    })
+
+    socket.on('update', (username, pos) => {
+                console.log(username)
+                if(mapLayer.entities[username] != undefined){
+                    console.log(username)
+                    console.log(mapLayer.entities)
+                    mapLayer.entities[username].position = pos
+                    mapLayer.entities[`${username}Tag`].position[0] = pos[0] - 1
+                    mapLayer.entities[`${username}Tag`].position[1] = pos[1] - 1
+                }
+                //friend.position = pos;
+    })
 
     window.onload = () => {
         initScene();
-        window.requestAnimationFrame(loop);
-        controls = new PayerControls(player)
+        while(!username){
+            var username = prompt("Username: ");
+                socket.emit('register', username, (callback) => {
+                    success(callback)
+                })
+            }
+
     }
 
 
-
+    function success(data){
+                    console.log(data)
+                    data.connectedUsers.forEach(user => {
+                        onlinePlayers.push(user)
+                        mapLayer.registerEntity(`${user}Tag`, new Entity(5 -1, 5 - 1, [user.split('')]))
+                        mapLayer.registerEntity(user, new Entity(5,5, ['☺']))
+                        console.log(mapLayer.entities)
+                    })
+                    console.log(data)
+                    player = new Entity(5, 5, ['☻'])
+                    mapLayer.registerEntity('player', player)
+                    camera = new PlayerCamera(player, mapLayer, 58, 28)
+                    window.requestAnimationFrame(loop);
+                    controls = new PayerControls(player, (ev) => {
+                        mapLayer.entities[`${data.username}Tag`].position[0] = player.position[0] - 1
+                        mapLayer.entities[`${data.username}Tag`].position[1] = player.position[1] - 1
+                        socket.emit('pos', data.username, player.mapPosition)
+                    })
+    }
 
 
 
     function loop(timeStamp){
 		game.ctx.fillRect(0, 0, game.canvas.width, game.canvas.height)
 
-        gameMapEntity.grid = camera.update();
-        friend.position[0] = player.prevPosition[0] - 1;
-        friend.position[1] = player.prevPosition[1] - 1;
-        //console.log(friend.position)
+        gameMapEntity.grid = camera.update();        //console.log(friend.position)
         // Calculate the number of seconds passed since the last frame
         secondsPassed = (timeStamp - oldTimeStamp) / 1000;
         oldTimeStamp = timeStamp;
@@ -64,7 +106,7 @@
         
 		util.appendSprite(1, 3, debugWindowEntity.grid, [['F','P','S',':', fps.toString().split('')[0], (fps.toString().split('')[1] != undefined ? fps.toString().split('')[1] : ' '),' ', '(', player.mapPosition[0].toString().split('')[0], (player.mapPosition[0].toString().split('')[1] != undefined ? player.mapPosition[0].toString().split('')[1] : ' ' ),',',player.mapPosition[1].toString().split('')[0], (player.mapPosition[1].toString().split('')[1] != undefined ? player.mapPosition[1].toString().split('')[1] : ' ' ),')']]);
 
-        secondCamEntity.grid = secondCam.update();
+
 
         screenLayer.update();
         mapLayer.update();
@@ -122,25 +164,14 @@
 
         }
 
-        box = new Entity(10, 10, [['◘','◘','◘'],['◘','◘','◘'],['◘','◘','◘'],])
-
-        console.log(game.mousePos)
-
         cursor = new Entity(1,1, [['♦']])
-
-        player = new Entity(5, 5, ['☻'])
-        friend = new Entity(5, 4, ['☺'])
-
 
         screenLayer = new Layer(100, 100);
         mapLayer = new Layer(200,200);
 
-
         gameMapEntity = new Entity(1,1, new Grid(56, 30))
         debugWindowEntity = new Entity(0, 59, util.makeTitle('INFECTOR 0.2.0' ,util.makeBorder(new Grid(20, 5))))
         inventoryEntity = new Entity(5, 62, new Grid(20, 20));
-
-        secondCamEntity = new Entity(5, 69, new Grid(5, 20));
 
         inventoryEntity.grid = util.appendSprite(1, 1, inventoryEntity.grid, [['i','n','v','e','n','t','o','r','y']])
 
@@ -155,28 +186,13 @@
           inventoryEntity.grid = util.appendSprite(inventoryLineCountBuffer,2 , inventoryEntity.grid , [invStr.split('')])
         }
 
-        //mapLayer.registerEntity('background', new Entity(0, 0, util.CellularAutomata(util.randomize(new Grid(200, 200), ['•', ' ']), 1)))
-        //setInterval(() => {
-        //    mapLayer.entities.background.grid = util.CellularAutomata(mapLayer.entities.background.grid, 1)
-        //}, 100)
 
         mapLayer.registerEntity('background', new Entity(0, 0, util.fill(mapLayer.grid, '•')))
-        mapLayer.registerEntity('box', box);
-        mapLayer.registerEntity('friend', friend)
-        mapLayer.registerEntity('player', player)
-      //  screenLayer.registerEntity('secondCam', secondCamEntity)
- 
 
-
-        camera = new PlayerCamera(player, mapLayer, 58, 28)
-        secondCam = new PlayerCamera( player ,mapLayer, 20, 5)
-
-        
         screenLayer.registerEntity('map', gameMapEntity)
         screenLayer.registerEntity('debugWindow', debugWindowEntity)
         screenLayer.registerEntity('inventory', inventoryEntity)
         screenLayer.registerEntity('cursor', cursor)
-        createEnemys(10);
         //createWeed(420);
 
         

@@ -1,8 +1,14 @@
-const express = require('express');
-const fs = require('fs')
-var app = express();
+const app = require('express')();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+const fs = require('fs');
+var connectedUsers;
 
-app.listen(81)
+http.listen(81, () => {
+  console.log("listening on 81")
+})
+
+//app.listen(81)
 
 app.get("/js/:file",function(req, res){
     var file = req.param('file');
@@ -29,6 +35,26 @@ app.get('/', (req, res) => {
 app.get('/2', (req, res) => {
     res.sendFile(__dirname + '/public/infector/game2.html')
 })
+
+connectedUsers = []
+io.on('connection', (socket) =>  {
+  console.log('connection')
+  socket.on('register', ((username, callback) => {
+    //connectedUsers[username] = {socket, data:{"username":username}};
+    connectedUsers.push(username)
+    var cb = {username: username, "connectedUsers": connectedUsers}
+    //connectedUsers.push[socket]
+    //console.log(connectedUsers)
+    socket.broadcast.emit('newPlayer', username, [5, 5])
+    callback(cb)
+  }))
+
+  socket.on('pos', (username, pos)  => {
+    //console.log(username)
+    //console.log(pos)
+    socket.broadcast.emit('update', username, pos)
+  })
+});
 
 
 function getFilesizeInBytes(filename) {

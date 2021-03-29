@@ -186,7 +186,8 @@ class Util{
 }
 
 class PayerControls{
-    constructor(player){
+    constructor(player, callback){
+        this.callback =callback
         this.KeyboardHelper = { left: 65, up: 87, right: 68, down: 83 };
         this.player = player;
         this.rightPressed = false;
@@ -208,7 +209,6 @@ class PayerControls{
     }
 
     keyDownHandler(event){
-        console.log(this.KeyboardHelper)
         if(event.keyCode == this.KeyboardHelper.right) {
             this.rightPressed = true;
         }
@@ -241,8 +241,8 @@ class PayerControls{
     }
 
     update(){
+        this.callback()
         if(this.upPressed){
-            console.log("alskdf")
             this.player.position[0] = this.player.position[0] - 1
             this.player.mapPosition[0] = this.player.mapPosition[0] - 1
         }
