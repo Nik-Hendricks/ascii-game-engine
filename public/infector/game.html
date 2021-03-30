@@ -34,7 +34,7 @@
 
 
 
-    socket.on('newPlayer', (username, pos)  => {
+    socket.on('newPlayer', (username, pos)  => {ssss
         console.log(username)
         onlinePlayers[username] = pos
         mapLayer.registerEntity(`${username}Tag`, new Entity(pos[0] -1, pos[1] - 1, [username.split('')]))
@@ -76,7 +76,7 @@
                     console.log(data)
                     player = new Entity(5, 5, ['☻'])
                     mapLayer.registerEntity('player', player)
-                    camera = new PlayerCamera(player, mapLayer, 58, 28)
+                    camera = new PlayerCamera(player, mapLayer, 50, 50)
                     window.requestAnimationFrame(loop);
                     controls = new PayerControls(player, (ev) => {
                         mapLayer.entities[`${data.username}Tag`].position[0] = player.position[0] - 1
@@ -174,7 +174,7 @@
         screenLayer = new Layer(100, 100);
         mapLayer = new Layer(200,200);
 
-        gameMapEntity = new Entity(1,1, new Grid(56, 30))
+        gameMapEntity = new Entity(1,1, new Grid(100, 100))
         debugWindowEntity = new Entity(0, 59, util.makeTitle('INFECTOR 0.2.0' ,util.makeBorder(new Grid(20, 5))))
         inventoryEntity = new Entity(5, 62, new Grid(20, 20));
 
