@@ -191,15 +191,68 @@ class Util{
     }
 }
 
+class NET_IO{
+    //probably put address here
+    //I want to check for localhost to denote MASTER client
+    constructor(host, netlayer){
+        this.host = host;
+        this.socket = io.connect(host);
+        this.netLayer = netlayer
+        console.log(this.socket)
+        this.netEntities = {}
+        //setInterval(() => {this.update()}, 200)
+    }
+
+    getNetEntities(){
+        this.socket.emit('getNetEntities', (net_entities) => {
+            console.log(JSON.parse(net_entities))
+            this.netEntities = net_entities
+        })
+    }
+
+    sendNetEntities(layer){
+        var netEnt = this.netEntities
+        console.log(netEnt)
+        
+        // Convert netEnt array "object" into true JS object
+        var trueObject = {}
+        for (var prop in netEnt) {
+            trueObject[prop] = netEnt[prop]
+        }
+
+        var ent = JSON.stringify(trueObject);
+        this.socket.emit('sendNetEntities', ent)
+    }
+
+    registerEntity(name, entity){
+        this.netEntities[name] = entity
+        console.log(this.netEntities)
+    }
+
+    update(layer, callback){
+        //check host if localhost dont retreive new data only send
+        if(this.host == "localhost"){
+            this.sendNetEntities(layer)                
+        }else{
+            this.getNetEntities(layer)
+            console.log(this.netEntities)
+        }
+
+
+        callback(this.netEntities)
+
+
+    }
+}
+
 class PayerControls{
     constructor(player, callback){
         this.callback =callback
         this.KeyboardHelper = { left: 65, up: 87, right: 68, down: 83 };
+        this.MouseHelper = {leftClick: 0}
         this.player = player;
-        this.rightPressed = false;
-        this.leftPressed = false;
-        this.upPressed = false;
-        this.downPressed = false;
+
+        this.keys = {"rightPressed":false, "leftPressed":false, "upPressed":false, "downPressed":false, "mouseLeftPressed":false}
         this.init();
     }
 
@@ -211,59 +264,79 @@ class PayerControls{
         window.addEventListener('keyup', () => {
             this.keyUpHandler(event)
         }, false);
-        setInterval(() => {this.update()}, 90)
+        window.addEventListener('mousedown', () => {
+            this.mouseDownHandler(event);
+        })
+        window.addEventListener('mouseup', () => {
+            this.mouseUpHandler(event);
+        })
+        setInterval(() => {this.update(event)}, 90)
+    }
+
+    mouseUpHandler(event){
+        if(event.button == this.MouseHelper.leftClick){
+            this.keys.mouseLeftPressed = false;
+        }
+    }
+
+    mouseDownHandler(event){
+        console.log(event)
+        if(event.button == this.MouseHelper.leftClick){
+            this.keys.mouseLeftPressed = true;
+        }
     }
 
     keyDownHandler(event){
         if(event.keyCode == this.KeyboardHelper.right) {
-            this.rightPressed = true;
+            this.keys.rightPressed = true;
         }
         else if(event.keyCode == this.KeyboardHelper.left) {
-            this.leftPressed = true;
+            this.keys.leftPressed = true;
         }
         if(event.keyCode == this.KeyboardHelper.down) {
-            this.downPressed = true;
+            this.keys.downPressed = true;
         }
         else if(event.keyCode == this.KeyboardHelper.up) {
-            this.upPressed = true;
+            this.keys.upPressed = true;
         }
         //this.update()
     }
 
     keyUpHandler(event){
         if(event.keyCode == this.KeyboardHelper.right) {
-            this.rightPressed = false;
+            this.keys.rightPressed = false;
         }
         else if(event.keyCode == this.KeyboardHelper.left) {
-            this.leftPressed = false;
+            this.keys.leftPressed = false;
         }
         if(event.keyCode == this.KeyboardHelper.down) {
-            this.downPressed = false;
+            this.keys.downPressed = false;
         }
         else if(event.keyCode == this.KeyboardHelper.up) {
-            this.upPressed = false;
+            this.keys.upPressed = false;
         }
         //this.update()
     }
 
-    update(){
-        this.callback()
-        if(this.upPressed){
+    update(event){
+        
+        if(this.keys.upPressed){
             this.player.position[0] = this.player.position[0] - 1
             this.player.mapPosition[0] = this.player.mapPosition[0] - 1
         }
-        if(this.downPressed){
+        if(this.keys.downPressed){
             this.player.position[0] = this.player.position[0] + 1
             this.player.mapPosition[0] = this.player.mapPosition[0] + 1
         }
-        if(this.rightPressed){
+        if(this.keys.rightPressed){
             this.player.position[1] = this.player.position[1] + 1
             this.player.mapPosition[1] = this.player.mapPosition[1] + 1
         }
-        if(this.leftPressed){
+        if(this.keys.leftPressed){
             this.player.position[1] = this.player.position[1] - 1
             this.player.mapPosition[1] = this.player.mapPosition[1] - 1
         }
+        this.callback(this.keys)
 
     }
     
@@ -368,7 +441,7 @@ class Layer{
         this.grid = new Grid(x, y)
         this.blankGrid = new Grid(x, y);
         console.log(this.blankGrid);
-        this.entities = [];
+        this.entities = {};
     }
 
     add(entity){
@@ -420,21 +493,19 @@ class Game{
         this.ctx = this.setupCanvas(this.canvas);
         this.tempCtx = this.tempCanvas.getContext('2d');
         this.fontX = 16;
-        this.fontY = 32;
+        this.fontY = 16;
         this.font = new Font('img/IBM8x16_NoPadding_extended.png')
         this.layerGroup = [];
         this.entities = [];
         this.actions = [];
         this.mousePos = [0, 0]
-
-
     }
 
 
 
     getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
-    return [Math.floor((evt.clientX - rect.left ) / 16), Math.floor((evt.clientY - rect.top) / 32)]
+    return [Math.floor((evt.clientX - rect.left ) / this.fontX), Math.floor((evt.clientY - rect.top) / this.fontY)]
     }
 
     setupCanvas(canvas) {
@@ -482,3 +553,12 @@ function getOccurrence(array, value) {
     return count;
 }
 
+
+(function(exports) {
+     
+
+    exports.Grid = Grid;
+    exports.Game = Game;
+    
+})(typeof exports === 'undefined'? 
+this['infector']={}: exports);

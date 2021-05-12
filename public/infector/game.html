@@ -34,7 +34,7 @@
 
 
 
-    socket.on('newPlayer', (username, pos)  => {ssss
+    socket.on('newPlayer', (username, pos)  => {
         console.log(username)
         onlinePlayers[username] = pos
         mapLayer.registerEntity(`${username}Tag`, new Entity(pos[0] -1, pos[1] - 1, [username.split('')]))
