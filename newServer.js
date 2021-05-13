@@ -1,10 +1,11 @@
 const { Server } = require("socket.io");
-const io = new Server.attach(81);
+const io = new Server(81);
 const infector = require("./public/infector/js/game");
 
 
-console.log(infector)
-console.log(infector.Grid)
+var test = new infector.Grid(10, 10)
+
+console.log(test.Grid)
 
 
 
@@ -12,7 +13,7 @@ console.log(infector.Grid)
 
 class GameServer{
     constructor(){
-        this.tickSpeed = 300;
+        this.tickSpeed = 50;
         this.init();
         
         //server tick
@@ -20,7 +21,6 @@ class GameServer{
 
     setupSocketEvents(){
         io.on('connection', (socket) =>  {
-
             console.log(socket);
         })
     }
